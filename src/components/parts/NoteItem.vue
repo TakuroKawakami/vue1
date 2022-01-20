@@ -1,4 +1,5 @@
 <template>
+  <div class="note-family">
   <div class="note"
     @mouseover="onMouseOver"
     @mouseleave="onMouseLeave"
@@ -14,28 +15,48 @@
     <div class="note-name">{{note.name}}</div>
 
     <div v-show="note.mouseover" class="buttons">
-      <div class="button-icon">
+      <div class="button-icon" v-if="layer < 3" @click="onClickChildNote(note)">
         <i class="fas fa-sitemap"></i>
       </div>
-      <div class="button-icon">
+         <div class="button-icon" @click="onClickAddNoteAfter(parentNote, note)">
         <i class="fas fa-plus-circle"></i>
       </div>
       <div class="button-icon" @click="onClickEdit(note)">
         <i class="fas fa-edit"></i>
       </div>
-      <div class="button-icon" @click="onClickDelete(note)">
+      <div class="button-icon" @click="onClickDelete(parentNote, note)">
         <i class="fas fa-trash"></i>
       </div>
     </div>
     </template>
   </div>
+      <div class="child-note">
+        <draggable v-bind:list="note.children" group="notes">
+      <NoteItem
+        v-for="childNote in note.children"
+        v-bind:note="childNote"
+        v-bind:layer="layer + 1"
+        v-bind:parentNote="note"
+        v-bind:key="childNote.id"
+        @delete="onClickDelete"
+        @editStart="onClickEdit"
+        @editEnd="onEditEnd"
+        @addChild="onClickChildNote"
+        @addNoteAfter="onClickAddNoteAfter"
+      />
+        </draggable>
+    </div>
+  </div>
 </template>
 
 <script>
+import draggable from 'vuedraggable'
 export default {
   name: 'NoteItem',
   props: [
     'note',
+    'parentNote',
+    'layer',
   ],
   methods: {
     onMouseOver : function() {
@@ -44,8 +65,8 @@ export default {
     onMouseLeave : function() {
       this.note.mouseover = false;
     },
-    onClickDelete : function(note) {
-      this.$emit('delete', note);
+    onClickDelete : function(parentNote, note) {
+      this.$emit('delete', parentNote, note);
     },
     onClickEdit : function(note) {
       this.$emit('editStart', note);
@@ -53,6 +74,15 @@ export default {
     onEditEnd : function() {
       this.$emit('editEnd');
     },
+    onClickChildNote : function(note) {
+      this.$emit('addChild', note);
+    },
+    onClickAddNoteAfter : function(parentNote, note) {
+      this.$emit('addNoteAfter', parentNote, note);
+    },
+  },
+  components: {
+    draggable,
   },
 }
 </script>
@@ -84,5 +114,8 @@ export default {
       border-radius: 5px;
     }
   }
+}
+.child-note {
+  padding-left: 10px;
 }
 </style>
